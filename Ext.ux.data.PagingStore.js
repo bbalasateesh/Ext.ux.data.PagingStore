@@ -113,6 +113,7 @@ Ext.define('Ext.ux.data.PagingStore', {
 				map[data.getKey(item)] = item;
 			}
 			data.map = map;
+			data.rebuildIndexMap();
 			me.allData = allData;
 			me.data = data;
 		}
@@ -133,6 +134,8 @@ Ext.define('Ext.ux.data.PagingStore', {
 		}
 
 		if (!addRecords) {
+			me.data.length = 0;
+			me.data.removeAll();
 			delete me.allData;
 			delete me.snapshot;
 			me.clearData(true);
@@ -146,6 +149,7 @@ Ext.define('Ext.ux.data.PagingStore', {
 
 		if (!me.allData) {
 			me.applyPaging();
+			me.allData.rebuildIndexMap();
 		}
 
 		if (start !== undefined) {
@@ -320,6 +324,7 @@ Ext.define('Ext.ux.data.PagingStore', {
 		if (me.autoSync && sync && !me.autoSyncSuspended) {
 			me.sync();
 		}
+		me.load();
 	},
 
 	doSort: function (sorterFn) {
@@ -431,6 +436,10 @@ Ext.define('Ext.ux.data.PagingStore', {
 		if (!isMove && me.autoSync && sync && !me.autoSyncSuspended) {
 			me.sync();
 		}
+		if (me.data.length == 0) {
+			me.loadPage(1);
+		}
+		me.load();
 	},
 
 	filter: function (filters, value) {
@@ -573,10 +582,15 @@ Ext.define('Ext.ux.data.PagingStore', {
 		if (me.snapshot) {
 			me.snapshot.clear();
 		}
+		if (me.data) {
+			me.data.removeAll();
+		}
 
 		if (me.allData) {
 			me.allData.clear();
+			me.allData.removeAll();
 		}
+		me.load();
 
 		// Special handling to synch the PageMap only for removeAll
 		// TODO: handle other store/data modifications WRT buffered Stores.
